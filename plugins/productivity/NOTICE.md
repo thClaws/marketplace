@@ -80,7 +80,20 @@ thClaws marketplace at `github.com/thClaws/marketplace`:
    not user-visible strings, and renaming would touch 10+ unrelated
    lines.
 
-10. **This `NOTICE.md`** — added per Apache 2.0 §4(b) "stating that you
+10. **Inlined snapshot for zero-click dashboard view** — added a
+    `<script id="thclaws-tasks-snapshot">` block in `dashboard.html`
+    plus a `tryInlinedSnapshot()` boot path. `start/SKILL.md` and
+    `update/SKILL.md` regenerate the snapshot from current `TASKS.md`
+    via a Python one-liner (Bash heredoc form). Lets users open
+    `dashboard.html` and see the board immediately without picking a
+    file. Live read-write back to `TASKS.md` still uses the original
+    File System Access API picker (one click per browser session,
+    persisted via IndexedDB after first pick). Browser security
+    forbids `file://` HTML from reading sibling files without a user
+    gesture, so inlining at write-time is the cleanest path to
+    "no-click first view" without requiring a local HTTP server.
+
+11. **This `NOTICE.md`** — added per Apache 2.0 §4(b) "stating that you
     changed the files".
 
 The original `LICENSE` (Apache License, Version 2.0) is preserved

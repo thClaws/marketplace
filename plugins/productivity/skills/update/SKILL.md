@@ -92,13 +92,41 @@ Tasks often contain richer context than memory. Extract and update:
 - **Relationships** ("Todd's sign-off on Maya's proposal") → cross-reference people
 - **Deadlines** → add to project files
 
-### 7. Report
+### 7. Refresh Dashboard Snapshot
+
+If you've changed `TASKS.md` in this update, regenerate the dashboard's
+inlined snapshot so the next open shows the new state without a click:
+
+```bash
+python3 - <<'PY'
+import pathlib, re
+dash = pathlib.Path('dashboard.html')
+tasks = pathlib.Path('TASKS.md')
+if not (dash.exists() and tasks.exists()):
+    raise SystemExit(0)
+html = dash.read_text()
+content = tasks.read_text()
+new = re.sub(
+    r'<!--\s*thclaws-tasks-begin\s*-->[\s\S]*?<!--\s*thclaws-tasks-end\s*-->',
+    f'<!-- thclaws-tasks-begin -->\n{content}\n<!-- thclaws-tasks-end -->',
+    html,
+    count=1,
+)
+if new != html:
+    dash.write_text(new)
+PY
+```
+
+Skip this step if dashboard.html doesn't exist yet (user hasn't run `/start`).
+
+### 8. Report
 
 ```
 Update complete:
 - Tasks: +3 from project tracker (e.g. Asana), 1 completed, 2 triaged
 - Memory: 2 gaps filled, 1 project enriched
 - All tasks decoded ✓
+- Dashboard snapshot refreshed
 ```
 
 ## Comprehensive Mode (`--comprehensive`)

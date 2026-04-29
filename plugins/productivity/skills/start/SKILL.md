@@ -30,17 +30,42 @@ Check the working directory for:
 
 ### 2. Create What's Missing
 
-Run these as concrete Bash commands — the SKILL.md text alone is insufficient guidance for the model; the `cp` and the `cat > ...` are what actually create the files. Use the Bash tool, do not improvise.
+Run these as concrete Bash commands — the SKILL.md text alone is insufficient guidance for the model; the actual file operations are what creates the system. Use the Bash tool, do not improvise.
 
-**Always copy the dashboard first** (idempotent — `cp -n` skips if it already exists):
+**Step A — Copy the dashboard** (idempotent):
 
 ```bash
-cp -n "{skill_dir}/../dashboard.html" ./dashboard.html
+cp -f "{skill_dir}/../dashboard.html" ./dashboard.html
 ```
 
-**If `TASKS.md` doesn't exist** create it with the standard template (use the Write tool, body matches `task-management` skill's template).
+(`-f` overwrites because the dashboard's snapshot block needs a fresh template each time — user customizations don't belong in dashboard.html anyway, only in TASKS.md / AGENTS.md.)
 
-**If `AGENTS.md` and `memory/` don't exist:** this is a fresh setup — after the dashboard copy, begin the memory bootstrap workflow (see below). Both files/dirs go in the current working directory.
+**Step B — Create TASKS.md if missing.** Use the Write tool with the standard template (see the `task-management` skill).
+
+**Step C — Inline TASKS.md content into the dashboard so it auto-loads with zero clicks.** Run:
+
+```bash
+python3 - <<'PY'
+import pathlib, re
+dash = pathlib.Path('dashboard.html')
+tasks = pathlib.Path('TASKS.md')
+if not tasks.exists():
+    raise SystemExit(0)
+html = dash.read_text()
+content = tasks.read_text()
+new = re.sub(
+    r'<!--\s*thclaws-tasks-begin\s*-->[\s\S]*?<!--\s*thclaws-tasks-end\s*-->',
+    f'<!-- thclaws-tasks-begin -->\n{content}\n<!-- thclaws-tasks-end -->',
+    html,
+    count=1,
+)
+dash.write_text(new)
+PY
+```
+
+This is what makes the dashboard render the board on first open without any file picker. The dashboard still uses the File System Access API for write-back when the user wants live sync (one click per browser session).
+
+**If `AGENTS.md` and `memory/` don't exist:** this is a fresh setup — after the dashboard steps, begin the memory bootstrap workflow (see below). Both files/dirs go in the current working directory.
 
 ### 3. Open the Dashboard
 

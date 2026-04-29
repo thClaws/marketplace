@@ -1220,6 +1220,24 @@
     </div>
   </header>
 
+  <!-- thClaws auto-load snapshot.
+       /start writes the project's current TASKS.md content into the
+       block between the two markers below. The dashboard reads that
+       content on load and renders the board with zero clicks — no
+       file picker needed for the first view.
+
+       Live read+write back to TASKS.md still uses the File System
+       Access API picker (Chromium browsers) when the user clicks
+       "Connect for live edits". After that, IndexedDB persistence
+       restores the connection silently in the same browser session.
+
+       Empty markers (i.e., the marker-only state with no content
+       between them) is the "no snapshot, fall back to picker" form. -->
+  <script type="text/markdown" id="thclaws-tasks-snapshot">
+<!-- thclaws-tasks-begin -->
+<!-- thclaws-tasks-end -->
+  </script>
+
   <!-- TASKS TAB PANEL -->
   <div class="tab-panel active" id="tasksPanel">
     <div class="list-view" id="listView" style="display: none;"></div>
@@ -2569,10 +2587,45 @@
       }
     }
 
-    // Try the silent auto-load path before the user has to click.
-    // No-op for non-Chromium browsers, first-time users, or moved
-    // files — caller falls back to the manual pick UX in those cases.
-    tryAutoLoad();
+    // ── Inlined snapshot (zero-click first view) ─────────────────
+    //
+    // /start (and /update) writes the current TASKS.md content into
+    // the <script id="thclaws-tasks-snapshot"> block at the top of
+    // this file. We read that block here and render the board
+    // immediately — no file picker needed for the read-only view.
+    //
+    // For live edits (write-back to TASKS.md), the user still picks
+    // the file once via the existing FSAA flow; subsequent saves go
+    // straight through. The inlined snapshot is just the boot view.
+    function tryInlinedSnapshot() {
+      const el = document.getElementById('thclaws-tasks-snapshot');
+      if (!el) return false;
+      const raw = el.textContent || '';
+      // Extract content strictly between the begin/end markers — the
+      // empty-template form has only marker comments and whitespace,
+      // which we treat as "no snapshot".
+      const m = raw.match(/<!--\s*thclaws-tasks-begin\s*-->([\s\S]*?)<!--\s*thclaws-tasks-end\s*-->/);
+      if (!m) return false;
+      const content = m[1].trim();
+      if (!content) return false;
+      const fakeFile = {
+        name: 'TASKS.md',
+        lastModified: Date.now(),
+      };
+      taskFileHandle = null; // snapshot path — Save will trigger the
+                             // FSAA picker on first save attempt.
+      applyLoadedFile(fakeFile, content, null);
+      // Override the file path label so the user knows this is a
+      // snapshot, not a live link.
+      filePathEl.textContent = 'TASKS.md (snapshot — click "Reload" or Save to enable live sync)';
+      return true;
+    }
+
+    // Boot order: inlined snapshot → persisted FSAA handle → manual
+    // picker. Each step short-circuits if it succeeds.
+    if (!tryInlinedSnapshot()) {
+      tryAutoLoad();
+    }
 
     // Surface the browser-support situation up-front so users on
     // Safari/Firefox aren't left wondering why nothing happened.
