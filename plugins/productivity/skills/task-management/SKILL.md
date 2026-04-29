@@ -94,8 +94,10 @@ This is idempotent and a no-op if `dashboard.html` doesn't exist
 - *(Read-only — no snapshot regen needed)*
 
 **When user says "add a task" / "remind me to":**
-- Add to Active section with `- [ ] **Task**` format
-- Include context if provided (who it's for, due date)
+- **Always use the canonical format** — `- [ ] ` (dash, space, open-bracket, space, close-bracket, space) **then** the task title. Without the `- [ ] ` prefix the dashboard parser silently drops the line.
+- Concretely: `- [ ] อ่านหนังสือ` not `อ่านหนังสือ`. `- [ ] **Submit report** - to Sarah, due Friday` not `Submit report to Sarah Friday`.
+- Include context inline if provided (who it's for, due date) after the title.
+- Add to the `## Active` section.
 - **Run the snapshot-regen Bash command above.**
 
 **When user says "done with X" / "finished X":**

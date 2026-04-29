@@ -1380,11 +1380,19 @@
             resultSections.push({ id: currentSectionId, name: sectionName });
             resultTasks[currentSectionId] = [];
           }
-        } else if (line.match(/^- \[[ xX]\]/)) {
+        } else if (line.match(/^- \[[ xX]\]/) || line.match(/^- (?!\[)\S/)) {
+          // Tolerate three task formats:
+          //   - [ ] **foo** - context     ← canonical
+          //   - [x] foo                    ← canonical (done)
+          //   - foo                        ← bare list item (treat as unchecked)
+          // The third form is what agents sometimes write when they
+          // forget to add the checkbox prefix. Better to render it
+          // than silently drop the line. Subsequent edits via the
+          // dashboard will normalize the line on save.
+          //
           // Auto-create an implicit "Active" section when a task line
           // appears before any `## ` header — natural for files written
-          // in a hurry (just `# Tasks` followed by checkboxes). Without
-          // this, section-less tasks were silently dropped.
+          // in a hurry (just `# Tasks` followed by checkboxes).
           if (!currentSectionId) {
             currentSectionId = taskSectionId('Active');
             currentSection = 'Active';
@@ -1396,8 +1404,11 @@
           if (currentTask) {
             resultTasks[currentSectionId].push(currentTask);
           }
-          const checked = line.match(/\[[xX]\]/) !== null;
-          let text = line.replace(/^- \[[ xX]\]\s*/, '');
+          const isCheckbox = line.match(/^- \[[ xX]\]/);
+          const checked = isCheckbox ? line.match(/\[[xX]\]/) !== null : false;
+          let text = isCheckbox
+            ? line.replace(/^- \[[ xX]\]\s*/, '')
+            : line.replace(/^- \s*/, '');
           let title = text;
           let note = '';
 
@@ -2571,6 +2582,13 @@
       const result = parseTaskMarkdown(content);
       sections = result.sections;
       tasks = result.tasks;
+      const taskCount = Object.values(tasks).reduce((acc, arr) => acc + arr.length, 0);
+      console.log('[thclaws] parsed', sections.length, 'section(s),', taskCount, 'task(s) total');
+      if (taskCount === 0 && content.trim()) {
+        console.log('[thclaws] WARNING: content has', content.split('\n').length, 'lines but parser found 0 tasks');
+        console.log('[thclaws] first 5 non-empty content lines:', content.split('\n').filter(l => l.trim()).slice(0, 5));
+        console.log('[thclaws] expected task line shapes: "- [ ] foo", "- [x] foo", or "- foo"');
+      }
       switchTaskView('board');
       if (fileHandle) startWatching();
       taskFileName = file.name;
@@ -2612,15 +2630,25 @@
     // straight through. The inlined snapshot is just the boot view.
     function tryInlinedSnapshot() {
       const el = document.getElementById('thclaws-tasks-snapshot');
-      if (!el) return false;
+      if (!el) {
+        console.log('[thclaws] no snapshot element found');
+        return false;
+      }
       const raw = el.textContent || '';
       // Extract content strictly between the begin/end markers — the
       // empty-template form has only marker comments and whitespace,
       // which we treat as "no snapshot".
       const m = raw.match(/<!--\s*thclaws-tasks-begin\s*-->([\s\S]*?)<!--\s*thclaws-tasks-end\s*-->/);
-      if (!m) return false;
+      if (!m) {
+        console.log('[thclaws] snapshot markers not found in', JSON.stringify(raw.slice(0, 100)));
+        return false;
+      }
       const content = m[1].trim();
-      if (!content) return false;
+      if (!content) {
+        console.log('[thclaws] snapshot is empty (markers present but no content) — falling through to picker');
+        return false;
+      }
+      console.log('[thclaws] snapshot content found,', content.length, 'chars,', content.split('\n').length, 'lines');
       const fakeFile = {
         name: 'TASKS.md',
         lastModified: Date.now(),
