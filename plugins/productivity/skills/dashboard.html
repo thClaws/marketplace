@@ -2444,6 +2444,97 @@
     // overwrite TASKS.md manually).
     const FS_ACCESS_SUPPORTED = typeof window.showOpenFilePicker === 'function';
 
+    // ── Persistent file handle (auto-load on revisit) ──────────────
+    //
+    // Chromium browsers can persist FileSystemFileHandle objects to
+    // IndexedDB. After first pick, we stash the handle keyed by the
+    // dashboard's file:// URL so the same dashboard.html in the same
+    // project picks it back up on every subsequent open. User still
+    // picks ONCE per project (browser security forbids zero-click
+    // file access from file:// pages); after that, auto-load.
+    //
+    // IDB key is the dashboard's pathname so different project dirs
+    // don't collide — opening dashboard.html in /projects/A and
+    // /projects/B remembers different TASKS.md files.
+
+    const HANDLE_DB_NAME = 'thclaws-productivity';
+    const HANDLE_STORE = 'handles';
+    const HANDLE_KEY = 'tasks:' + (location.pathname || '/');
+
+    function openHandleDb() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(HANDLE_DB_NAME, 1);
+        req.onupgradeneeded = () => {
+          if (!req.result.objectStoreNames.contains(HANDLE_STORE)) {
+            req.result.createObjectStore(HANDLE_STORE);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function saveTaskHandle(handle) {
+      try {
+        const db = await openHandleDb();
+        const tx = db.transaction(HANDLE_STORE, 'readwrite');
+        tx.objectStore(HANDLE_STORE).put(handle, HANDLE_KEY);
+        await new Promise((res) => (tx.oncomplete = res));
+        db.close();
+      } catch (e) { /* fail-silent */ }
+    }
+
+    async function loadTaskHandle() {
+      try {
+        const db = await openHandleDb();
+        const tx = db.transaction(HANDLE_STORE, 'readonly');
+        const req = tx.objectStore(HANDLE_STORE).get(HANDLE_KEY);
+        const handle = await new Promise((res, rej) => {
+          req.onsuccess = () => res(req.result);
+          req.onerror = () => rej(req.error);
+        });
+        db.close();
+        return handle || null;
+      } catch (e) { return null; }
+    }
+
+    async function clearTaskHandle() {
+      try {
+        const db = await openHandleDb();
+        const tx = db.transaction(HANDLE_STORE, 'readwrite');
+        tx.objectStore(HANDLE_STORE).delete(HANDLE_KEY);
+        await new Promise((res) => (tx.oncomplete = res));
+        db.close();
+      } catch (e) { /* fail-silent */ }
+    }
+
+    // Auto-load on dashboard open: if we have a remembered handle
+    // and the browser still grants read permission (no user gesture
+    // needed when permission was previously granted in the same
+    // session), load TASKS.md without picking.
+    async function tryAutoLoad() {
+      if (!FS_ACCESS_SUPPORTED) return false;
+      const handle = await loadTaskHandle();
+      if (!handle) return false;
+      try {
+        // queryPermission is silent (no prompt). If 'granted', go.
+        // If 'prompt', we'd need a user gesture — skip for now and
+        // re-prompt on the first openTaskFile click.
+        const perm = await handle.queryPermission({ mode: 'readwrite' });
+        if (perm !== 'granted') return false;
+        const file = await handle.getFile();
+        const content = await file.text();
+        taskFileHandle = handle;
+        applyLoadedFile(file, content, handle);
+        return true;
+      } catch (e) {
+        // Stale handle (file moved/deleted) — drop it so the user
+        // doesn't get stuck in a permission loop.
+        await clearTaskHandle();
+        return false;
+      }
+    }
+
     function applyLoadedFile(file, content, fileHandle) {
       lastModified = file.lastModified;
       const result = parseTaskMarkdown(content);
@@ -2469,10 +2560,19 @@
         const file = await taskFileHandle.getFile();
         const content = await file.text();
         applyLoadedFile(file, content, taskFileHandle);
+        // Persist for auto-load on next visit. Browser will re-grant
+        // permission silently within the same session, and re-prompt
+        // (with one click) in subsequent sessions.
+        saveTaskHandle(taskFileHandle);
       } catch (e) {
         if (e.name !== 'AbortError') { showStatus('Error: ' + e.message); }
       }
     }
+
+    // Try the silent auto-load path before the user has to click.
+    // No-op for non-Chromium browsers, first-time users, or moved
+    // files — caller falls back to the manual pick UX in those cases.
+    tryAutoLoad();
 
     // Surface the browser-support situation up-front so users on
     // Safari/Firefox aren't left wondering why nothing happened.
