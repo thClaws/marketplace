@@ -2711,12 +2711,69 @@
       location.reload();
     });
 
+    /// Try to save via thClaws's host bridge first.
+    ///
+    /// When this dashboard is loaded inside thClaws's Files tab, the
+    /// containing iframe gets a parent window — that's the React
+    /// shell, which has access to thClaws's `file_write` IPC. We
+    /// postMessage the new content to the parent and let it write
+    /// the file. Zero clicks, no FSAA picker, no download.
+    ///
+    /// Returns `true` on success (within 5s ack timeout), `false`
+    /// otherwise. Caller falls through to the FSAA / download paths.
+    /// Outside thClaws (plain browser tab, top-level window), the
+    /// `window.parent === window` check short-circuits and we return
+    /// false immediately.
+    async function saveViaThclawsBridge(content) {
+      if (window.parent === window) return false;
+      return new Promise((resolve) => {
+        const reqId =
+          (window.crypto && window.crypto.randomUUID
+            ? window.crypto.randomUUID()
+            : 'sv-' + Date.now() + '-' + Math.random().toString(16).slice(2));
+        const handler = (e) => {
+          const d = e.data;
+          if (d && d.type === 'thclaws-dashboard-save-ack' && d.reqId === reqId) {
+            window.removeEventListener('message', handler);
+            resolve(d.ok === true);
+          }
+        };
+        window.addEventListener('message', handler);
+        window.parent.postMessage(
+          {
+            type: 'thclaws-dashboard-save',
+            reqId,
+            filename: 'TASKS.md',
+            content,
+          },
+          '*'
+        );
+        // Belt-and-braces: if thClaws doesn't respond within 5s, the
+        // host probably doesn't have the bridge wired (older thClaws
+        // version, or running outside the Files tab) — fall through.
+        setTimeout(() => {
+          window.removeEventListener('message', handler);
+          resolve(false);
+        }, 5000);
+      });
+    }
+
     saveBtn.addEventListener('click', async () => {
-      // If we loaded via the inlined snapshot (no FSAA handle yet)
-      // and the browser supports the File System Access API, prompt
-      // the user to pick TASKS.md NOW so we can write back. The pick
-      // is a one-time per-project gesture; the resulting handle is
-      // persisted to IndexedDB and auto-restored on next visit.
+      // 0. Try thClaws's host bridge — true zero-click save inside
+      //    the Files tab. No-op outside thClaws (top-level window).
+      const bridged = await saveViaThclawsBridge(toMarkdown());
+      if (bridged) {
+        hasChanges = false;
+        saveBtn.disabled = true;
+        showStatus('Saved to TASKS.md (via thClaws)');
+        return;
+      }
+
+      // 1. If we loaded via the inlined snapshot (no FSAA handle yet)
+      //    and the browser supports the File System Access API, prompt
+      //    the user to pick TASKS.md so we can write back. The pick
+      //    is a one-time per-project gesture; the resulting handle
+      //    is persisted to IndexedDB and auto-restored on next visit.
       if (!taskFileHandle && FS_ACCESS_SUPPORTED) {
         try {
           showStatus('Pick TASKS.md to enable live save…');
