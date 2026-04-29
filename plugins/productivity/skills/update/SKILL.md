@@ -94,30 +94,13 @@ Tasks often contain richer context than memory. Extract and update:
 
 ### 7. Refresh Dashboard Snapshot
 
-If you've changed `TASKS.md` in this update, regenerate the dashboard's
-inlined snapshot so the next open shows the new state without a click:
+If you've changed `TASKS.md` in this update, regenerate the dashboard's inlined snapshot:
 
 ```bash
-python3 - <<'PY'
-import pathlib, re
-dash = pathlib.Path('dashboard.html')
-tasks = pathlib.Path('TASKS.md')
-if not (dash.exists() and tasks.exists()):
-    raise SystemExit(0)
-html = dash.read_text()
-content = tasks.read_text()
-new = re.sub(
-    r'<!--\s*thclaws-tasks-begin\s*-->[\s\S]*?<!--\s*thclaws-tasks-end\s*-->',
-    f'<!-- thclaws-tasks-begin -->\n{content}\n<!-- thclaws-tasks-end -->',
-    html,
-    count=1,
-)
-if new != html:
-    dash.write_text(new)
-PY
+python3 "{skill_dir}/../../scripts/regen_dashboard.py"
 ```
 
-Skip this step if dashboard.html doesn't exist yet (user hasn't run `/start`).
+The script is idempotent — silently no-ops if `dashboard.html` doesn't exist (user hasn't run `/start`) or if the snapshot is already in sync.
 
 ### 8. Report
 

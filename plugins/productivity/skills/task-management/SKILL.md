@@ -59,31 +59,20 @@ The dashboard renders from a snapshot inlined into `dashboard.html` —
 it does **not** re-read `TASKS.md` on every browser open (browser
 security forbids that from `file://`). So **every time you mutate
 `TASKS.md` (add, complete, edit, reorder a task), immediately run this
-Bash command** to refresh the snapshot — otherwise the user sees the
-old state in the dashboard:
+single-line Bash command** to refresh the snapshot:
 
 ```bash
-python3 - <<'PY'
-import pathlib, re
-dash = pathlib.Path('dashboard.html')
-tasks = pathlib.Path('TASKS.md')
-if not (dash.exists() and tasks.exists()):
-    raise SystemExit(0)
-html = dash.read_text()
-content = tasks.read_text()
-new = re.sub(
-    r'<!--\s*thclaws-tasks-begin\s*-->[\s\S]*?<!--\s*thclaws-tasks-end\s*-->',
-    f'<!-- thclaws-tasks-begin -->\n{content}\n<!-- thclaws-tasks-end -->',
-    html,
-    count=1,
-)
-if new != html:
-    dash.write_text(new)
-PY
+python3 "{skill_dir}/../../scripts/regen_dashboard.py"
 ```
 
-This is idempotent and a no-op if `dashboard.html` doesn't exist
-(user hasn't run `/start` yet) or if the snapshot already matches.
+That's the entire command — one line, no heredoc, no quoting
+gymnastics. The script reads the current `TASKS.md` and `dashboard.html`
+in the current working directory, replaces the snapshot block, writes
+back. Idempotent: no-op if `dashboard.html` doesn't exist (user hasn't
+run `/start` yet) or if the snapshot already matches.
+
+If your tool boundary mangled an earlier multi-line heredoc, this
+single-file invocation eliminates that whole class of failure.
 
 ## How to Interact
 

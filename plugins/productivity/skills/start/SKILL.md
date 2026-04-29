@@ -56,28 +56,13 @@ cp -f "{skill_dir}/../dashboard.html" ./dashboard.html
 
 That's the entire file content — four headers under `# Tasks` with blank space between them. No other text. If TASKS.md already exists, do **not** overwrite — read what's there and proceed.
 
-**Step C — Inline TASKS.md content into the dashboard so it auto-loads with zero clicks.** Run:
+**Step C — Inline TASKS.md content into the dashboard so it auto-loads with zero clicks.** Run this single-line command:
 
 ```bash
-python3 - <<'PY'
-import pathlib, re
-dash = pathlib.Path('dashboard.html')
-tasks = pathlib.Path('TASKS.md')
-if not tasks.exists():
-    raise SystemExit(0)
-html = dash.read_text()
-content = tasks.read_text()
-new = re.sub(
-    r'<!--\s*thclaws-tasks-begin\s*-->[\s\S]*?<!--\s*thclaws-tasks-end\s*-->',
-    f'<!-- thclaws-tasks-begin -->\n{content}\n<!-- thclaws-tasks-end -->',
-    html,
-    count=1,
-)
-dash.write_text(new)
-PY
+python3 "{skill_dir}/../../scripts/regen_dashboard.py"
 ```
 
-This is what makes the dashboard render the board on first open without any file picker. The dashboard still uses the File System Access API for write-back when the user wants live sync (one click per browser session).
+This is what makes the dashboard render the board on first open without any file picker.
 
 **If `AGENTS.md` and `memory/` don't exist:** this is a fresh setup — after the dashboard steps, begin the memory bootstrap workflow (see below). Both files/dirs go in the current working directory.
 
