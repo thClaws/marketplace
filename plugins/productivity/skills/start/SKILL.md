@@ -30,11 +30,17 @@ Check the working directory for:
 
 ### 2. Create What's Missing
 
-**If `TASKS.md` doesn't exist:** Create it with the standard template (see task-management skill). Place it in the current working directory.
+Run these as concrete Bash commands — the SKILL.md text alone is insufficient guidance for the model; the `cp` and the `cat > ...` are what actually create the files. Use the Bash tool, do not improvise.
 
-**If `dashboard.html` doesn't exist:** Copy it from `{skill_dir}/../dashboard.html` to the current working directory.
+**Always copy the dashboard first** (idempotent — `cp -n` skips if it already exists):
 
-**If `CLAUDE.md` and `memory/` don't exist:** This is a fresh setup — after opening the dashboard, begin the memory bootstrap workflow (see below). Place these in the current working directory.
+```bash
+cp -n "{skill_dir}/../dashboard.html" ./dashboard.html
+```
+
+**If `TASKS.md` doesn't exist** create it with the standard template (use the Write tool, body matches `task-management` skill's template).
+
+**If `CLAUDE.md` and `memory/` don't exist:** this is a fresh setup — after the dashboard copy, begin the memory bootstrap workflow (see below). Both files/dirs go in the current working directory.
 
 ### 3. Open the Dashboard
 

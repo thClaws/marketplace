@@ -20,7 +20,10 @@ Tasks are tracked in a simple `TASKS.md` file that both you and the user can edi
 A visual dashboard is available for managing tasks and memory. **On first interaction with tasks:**
 
 1. Check if `dashboard.html` exists in the current working directory
-2. If not, copy it from `{skill_dir}/../dashboard.html` to the current working directory
+2. If not, run this Bash command to copy it (the `-n` flag is a no-op if it already exists):
+   ```bash
+   cp -n "{skill_dir}/../dashboard.html" ./dashboard.html
+   ```
 3. Inform the user: "I've added the dashboard. Run `/start` to set up the full system."
 
 The task board:
