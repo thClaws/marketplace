@@ -90,17 +90,23 @@ Only do this if `AGENTS.md` and `memory/` don't exist yet.
 
 The best source of workplace language is the user's actual task list. Real tasks = real shorthand.
 
-**Ask the user:**
-```
-Where do you keep your todos or task list? This could be:
-- A local file (e.g., TASKS.md, todo.txt)
-- An app (e.g. Asana, Linear, Jira, Notion, Todoist) — needs the matching MCP installed via /mcp install
-- A notes file
+**Source-of-tasks detection.** Default to the project's `TASKS.md` — thClaws is folder-based and the user already pointed at this directory by running `/start` here, so they implicitly chose this as the working context. Don't ask "where do you keep your tasks?" if `TASKS.md` exists in the cwd; just read it and proceed.
 
-I'll use your tasks to learn your workplace shorthand.
+```text
+Pseudocode:
+- If `TASKS.md` exists in cwd  → use it as the source, skip the question.
+- Else if a known external MCP is installed (Asana, Linear, etc.)
+                                  → ask the user which one to scan.
+- Else                            → ask once: "Should I scan an external
+                                    task source (Asana / Linear / Notion)
+                                    via /mcp install, or start fresh
+                                    with an empty memory and let it grow
+                                    from conversation?"
 ```
 
-**Once you have access to the task list:**
+Use `AskUserQuestion` only in the second/third branch — never in the first. When you do ask, keep the prompt to one line; multi-line text in the tool label garbles the terminal.
+
+**Once you have the task source:**
 
 For each task item, analyze it for potential shorthand:
 - Names that might be nicknames
