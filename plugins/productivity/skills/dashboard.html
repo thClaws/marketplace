@@ -2662,11 +2662,67 @@
       return true;
     }
 
-    // Boot order: inlined snapshot → persisted FSAA handle → manual
-    // picker. Each step short-circuits if it succeeds.
-    if (!tryInlinedSnapshot()) {
-      tryAutoLoad();
+    /// Try to load TASKS.md content live via the thClaws host bridge.
+    /// When this dashboard runs inside thClaws's Files tab iframe,
+    /// the parent window (React shell) reads the sibling TASKS.md
+    /// directly from disk via `file_read` IPC and sends it back —
+    /// no snapshot involved, always fresh.
+    ///
+    /// Returns `true` on success (within 3s ack timeout). Outside
+    /// thClaws (top-level browser tab), the parent === window
+    /// short-circuit makes this a synchronous false.
+    async function loadViaThclawsBridge() {
+      if (window.parent === window) return false;
+      return new Promise((resolve) => {
+        const reqId =
+          (window.crypto && window.crypto.randomUUID
+            ? window.crypto.randomUUID()
+            : 'ld-' + Date.now() + '-' + Math.random().toString(16).slice(2));
+        const handler = (e) => {
+          const d = e.data;
+          if (d && d.type === 'thclaws-dashboard-load-ack' && d.reqId === reqId) {
+            window.removeEventListener('message', handler);
+            if (d.ok && typeof d.content === 'string') {
+              const fakeFile = {
+                name: 'TASKS.md',
+                lastModified: Date.now(),
+              };
+              taskFileHandle = null;
+              applyLoadedFile(fakeFile, d.content, null);
+              filePathEl.textContent = 'TASKS.md (live via thClaws)';
+              console.log('[thclaws] loaded live via host bridge,', d.content.length, 'chars');
+              resolve(true);
+            } else {
+              resolve(false);
+            }
+          }
+        };
+        window.addEventListener('message', handler);
+        window.parent.postMessage(
+          {
+            type: 'thclaws-dashboard-load',
+            reqId,
+            filename: 'TASKS.md',
+          },
+          '*'
+        );
+        setTimeout(() => {
+          window.removeEventListener('message', handler);
+          resolve(false);
+        }, 3000);
+      });
     }
+
+    // Boot order:
+    //   1. thClaws host bridge → live read, no staleness possible
+    //   2. Inlined snapshot     → for plain browser usage
+    //   3. Persisted FSAA       → after first user pick (browser w/ FSAA)
+    //   4. Fall through         → user clicks Select File
+    (async () => {
+      if (await loadViaThclawsBridge()) return;
+      if (tryInlinedSnapshot()) return;
+      await tryAutoLoad();
+    })();
 
     // Surface the browser-support situation up-front so users on
     // Safari/Firefox aren't left wondering why nothing happened.
