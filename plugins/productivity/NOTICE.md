@@ -93,7 +93,21 @@ thClaws marketplace at `github.com/thClaws/marketplace`:
     gesture, so inlining at write-time is the cleanest path to
     "no-click first view" without requiring a local HTTP server.
 
-11. **This `NOTICE.md`** — added per Apache 2.0 §4(b) "stating that you
+11. **`start/SKILL.md` Step B inlines the TASKS.md template** instead
+    of saying "see the task-management skill" — agents were fabricating
+    placeholder tasks ("Welcome to your new dashboard!", "Add your
+    first task...") instead of following the canonical four-section
+    template. Inlining the template byte-for-byte and adding an
+    explicit "do not add example tasks or boilerplate" guard fixes the
+    drift. Same pattern: agents follow what they can copy verbatim,
+    not what they have to fetch from another file.
+
+12. **`start/SKILL.md` Step 6 dropped the redundant comprehensive-scan
+    offer** — that flow now lives only in `/update --comprehensive`.
+    Offering it twice (once at /start, again in /update) confused the
+    boundary between first-time setup and daily refresh.
+
+13. **This `NOTICE.md`** — added per Apache 2.0 §4(b) "stating that you
     changed the files".
 
 The original `LICENSE` (Apache License, Version 2.0) is preserved

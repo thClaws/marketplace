@@ -40,7 +40,21 @@ cp -f "{skill_dir}/../dashboard.html" ./dashboard.html
 
 (`-f` overwrites because the dashboard's snapshot block needs a fresh template each time — user customizations don't belong in dashboard.html anyway, only in TASKS.md / AGENTS.md.)
 
-**Step B — Create TASKS.md if missing.** Use the Write tool with the standard template (see the `task-management` skill).
+**Step B — Create TASKS.md if missing.** Use the Write tool with **exactly** this template, byte-for-byte. Do **not** add example tasks, welcome messages, "your first task here" placeholders, or instructional comments. The user adds their own tasks; an empty section means an empty section.
+
+```markdown
+# Tasks
+
+## Active
+
+## Waiting On
+
+## Someday
+
+## Done
+```
+
+That's the entire file content — four headers under `# Tasks` with blank space between them. No other text. If TASKS.md already exists, do **not** overwrite — read what's there and proceed.
 
 **Step C — Inline TASKS.md content into the dashboard so it auto-loads with zero clicks.** Run:
 
@@ -128,30 +142,14 @@ I see some terms I want to make sure I understand:
 
 Continue through each task, asking only about terms you haven't already decoded.
 
-### 6. Optional Comprehensive Scan
+### 6. Comprehensive Scan (deferred to `/update --comprehensive`)
 
-After task list decoding, offer:
-```
-Do you want me to do a comprehensive scan of your messages, emails, and documents?
-This takes longer but builds much richer context about the people, projects, and terms in your work.
-
-Or we can stick with what we have and add context later.
-```
-
-**If they choose comprehensive scan:**
-
-Gather data from available MCP sources (only those the user has installed via `/mcp install` or `/mcp add`):
-- **Chat:** Recent messages, channels, DMs (`~~chat`)
-- **Email:** Sent messages, recipients (`~~email`)
-- **Documents:** Recent docs, collaborators (`~~knowledge base`)
-- **Calendar:** Meetings, attendees (`~~calendar`)
-
-If a category has no installed MCP, skip it and note the gap — don't error out.
-
-Build a braindump of people, projects, and terms found. Present findings grouped by confidence:
-- **Ready to add** (high confidence) — offer to add directly
-- **Needs clarification** — ask the user
-- **Low frequency / unclear** — note for later
+Don't offer a comprehensive scan during `/start`. The canonical place
+for that flow is `/update --comprehensive`, which scans every available
+MCP source and proposes new memories. Offering both here and in
+`/update` confuses the boundary between "first-time setup" and "daily
+refresh." Just mention it in the wrap-up message (step 8) and let the
+user opt in when ready.
 
 ### 7. Write Memory Files
 
