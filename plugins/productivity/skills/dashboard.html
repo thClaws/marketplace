@@ -1214,6 +1214,7 @@
       </div>
     </div>
     <div class="buttons">
+      <button id="reloadBtn" title="Re-read dashboard.html and TASKS.md from disk — needed after the agent updates tasks.">Reload</button>
       <button id="openTaskBtn">Select File</button>
       <button id="openMemoryBtn" style="display: none;">Open Folder</button>
       <button id="saveBtn" class="primary" disabled style="display: none;">Save</button>
@@ -2663,6 +2664,22 @@
 
     openTaskBtn.addEventListener('click', openTaskFile);
     document.getElementById('openBtnLarge')?.addEventListener('click', openTaskFile);
+
+    // Reload button: simplest possible refresh — re-fetches
+    // dashboard.html (which the agent re-wrote with a fresh inlined
+    // snapshot) and re-reads any FSAA-connected file. Cheaper than
+    // teaching the dashboard to fetch its own file (browser security
+    // forbids file:// fetch of sibling files anyway). If the user
+    // has unsaved changes in this tab, prompt before discarding.
+    document.getElementById('reloadBtn').addEventListener('click', () => {
+      if (hasChanges) {
+        const ok = confirm(
+          'You have unsaved changes in the dashboard. Reload anyway? Unsaved edits will be lost.'
+        );
+        if (!ok) return;
+      }
+      location.reload();
+    });
 
     saveBtn.addEventListener('click', async () => {
       if (taskFileHandle) {
