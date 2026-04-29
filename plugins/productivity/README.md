@@ -33,7 +33,7 @@ This plugin gives thClaws a persistent understanding of your work:
 | Skill | Description |
 |-------|-------------|
 | `task-management` | Markdown-based task tracking using a shared TASKS.md file |
-| `memory-management` | Two-tier memory: CLAUDE.md for working memory, memory/ directory for deep storage |
+| `memory-management` | Two-tier memory: AGENTS.md for working memory, memory/ directory for deep storage |
 
 ## Adding connectors
 
@@ -64,7 +64,7 @@ The plugin's skills will pick up whatever's in `mcp.json` automatically — no p
 ```
 You: /start
 
-thClaws: [creates TASKS.md, CLAUDE.md, memory/ directory, and dashboard.html]
+thClaws: [creates TASKS.md, AGENTS.md, memory/ directory, and dashboard.html]
          [shows you the dashboard path]
          [asks about your role, team, and current priorities to seed memory]
 ```

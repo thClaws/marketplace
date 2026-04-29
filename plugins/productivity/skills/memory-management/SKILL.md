@@ -1,6 +1,6 @@
 ---
 name: memory-management
-description: Two-tier memory system that makes Claude a true workplace collaborator. Decodes shorthand, acronyms, nicknames, and internal language so Claude understands requests like a colleague would. CLAUDE.md for working memory, memory/ directory for the full knowledge base.
+description: Two-tier memory system that makes Claude a true workplace collaborator. Decodes shorthand, acronyms, nicknames, and internal language so Claude understands requests like a colleague would. AGENTS.md for working memory, memory/ directory for the full knowledge base.
 user-invocable: false
 ---
 
@@ -27,7 +27,7 @@ Without memory, that request is meaningless. With memory, Claude knows:
 ## Architecture
 
 ```
-CLAUDE.md          ← Hot cache (~30 people, common terms)
+AGENTS.md          ← Hot cache (~30 people, common terms)
 memory/
   glossary.md      ← Full decoder ring (everything)
   people/          ← Complete profiles
@@ -35,7 +35,7 @@ memory/
   context/         ← Company, teams, tools
 ```
 
-**CLAUDE.md (Hot Cache):**
+**AGENTS.md (Hot Cache):**
 - Top ~30 people you interact with most
 - ~30 most common acronyms/terms
 - Active projects (5-15)
@@ -44,7 +44,7 @@ memory/
 
 **memory/glossary.md (Full Glossary):**
 - Complete decoder ring - everyone, every term
-- Searched when something isn't in CLAUDE.md
+- Searched when something isn't in AGENTS.md
 - Can grow indefinitely
 
 **memory/people/, projects/, context/:**
@@ -56,7 +56,7 @@ memory/
 ```
 User: "ask todd about the PSR for phoenix"
 
-1. Check CLAUDE.md (hot cache)
+1. Check AGENTS.md (hot cache)
    → Todd? ✓ Todd Martinez, Finance
    → PSR? ✓ Pipeline Status Report
    → Phoenix? ✓ DB migration project
@@ -68,14 +68,14 @@ User: "ask todd about the PSR for phoenix"
    → "What does X mean? I'll remember it."
 ```
 
-This tiered approach keeps CLAUDE.md lean (~100 lines) while supporting unlimited scale in memory/.
+This tiered approach keeps AGENTS.md lean (~100 lines) while supporting unlimited scale in memory/.
 
 ## File Locations
 
-- **Working memory:** `CLAUDE.md` in current working directory
+- **Working memory:** `AGENTS.md` in current working directory
 - **Deep memory:** `memory/` subdirectory
 
-## Working Memory Format (CLAUDE.md)
+## Working Memory Format (AGENTS.md)
 
 Use tables for compactness. Target ~50-80 lines total.
 
@@ -226,7 +226,7 @@ $1.2M budget, 6-month timeline. Critical path for Horizon project.
 **Always** decode shorthand before acting on requests:
 
 ```
-1. CLAUDE.md (hot cache)     → Check first, covers 90% of cases
+1. AGENTS.md (hot cache)     → Check first, covers 90% of cases
 2. memory/glossary.md        → Full glossary if not in hot cache
 3. memory/people/, projects/ → Rich detail when needed
 4. Ask user                  → Unknown term? Learn it.
@@ -236,7 +236,7 @@ Example:
 ```
 User: "ask todd to do the PSR for oracle"
 
-CLAUDE.md lookup:
+AGENTS.md lookup:
   "todd" → Todd Martinez, Finance ✓
   "PSR" → Pipeline Status Report ✓
   "oracle" → (not in hot cache)
@@ -253,34 +253,34 @@ When user says "remember this" or "X means Y":
 
 1. **Glossary items** (acronyms, terms, shorthand):
    - Add to memory/glossary.md
-   - If frequently used, add to CLAUDE.md Quick Glossary
+   - If frequently used, add to AGENTS.md Quick Glossary
 
 2. **People:**
    - Create/update memory/people/{name}.md
-   - Add to CLAUDE.md Key People if important
+   - Add to AGENTS.md Key People if important
    - **Capture nicknames** - critical for decoding
 
 3. **Projects:**
    - Create/update memory/projects/{name}.md
-   - Add to CLAUDE.md Active Projects if current
+   - Add to AGENTS.md Active Projects if current
    - **Capture codenames** - "Phoenix", "the migration", etc.
 
-4. **Preferences:** Add to CLAUDE.md Preferences section
+4. **Preferences:** Add to AGENTS.md Preferences section
 
 ### Recalling Memory
 
 When user asks "who is X" or "what does X mean":
 
-1. Check CLAUDE.md first
+1. Check AGENTS.md first
 2. Check memory/ for full detail
 3. If not found: "I don't know what X means yet. Can you tell me?"
 
 ### Progressive Disclosure
 
-1. Load CLAUDE.md for quick parsing of any request
+1. Load AGENTS.md for quick parsing of any request
 2. Dive into memory/ when you need full context for execution
 3. Example: drafting an email to todd about the PSR
-   - CLAUDE.md tells you Todd = Todd Martinez, PSR = Pipeline Status Report
+   - AGENTS.md tells you Todd = Todd Martinez, PSR = Pipeline Status Report
    - memory/people/todd-martinez.md tells you he prefers Slack, is direct
 
 ## Bootstrapping
@@ -289,17 +289,17 @@ Use `/start` to initialize by scanning your chat, calendar, email, and documents
 
 ## Conventions
 
-- **Bold** terms in CLAUDE.md for scannability
-- Keep CLAUDE.md under ~100 lines (the "hot 30" rule)
+- **Bold** terms in AGENTS.md for scannability
+- Keep AGENTS.md under ~100 lines (the "hot 30" rule)
 - Filenames: lowercase, hyphens (`todd-martinez.md`, `project-phoenix.md`)
 - Always capture nicknames and alternate names
 - Glossary tables for easy lookup
-- When something's used frequently, promote it to CLAUDE.md
+- When something's used frequently, promote it to AGENTS.md
 - When something goes stale, demote it to memory/ only
 
 ## What Goes Where
 
-| Type | CLAUDE.md (Hot Cache) | memory/ (Full Storage) |
+| Type | AGENTS.md (Hot Cache) | memory/ (Full Storage) |
 |------|----------------------|------------------------|
 | Person | Top ~30 frequent contacts | glossary.md + people/{name}.md |
 | Acronym/term | ~30 most common | glossary.md (complete list) |
@@ -311,7 +311,7 @@ Use `/start` to initialize by scanning your chat, calendar, email, and documents
 
 ## Promotion / Demotion
 
-**Promote to CLAUDE.md when:**
+**Promote to AGENTS.md when:**
 - You use a term/person frequently
 - It's part of active work
 
@@ -320,4 +320,4 @@ Use `/start` to initialize by scanning your chat, calendar, email, and documents
 - Person no longer frequent contact
 - Term rarely used
 
-This keeps CLAUDE.md fresh and relevant.
+This keeps AGENTS.md fresh and relevant.

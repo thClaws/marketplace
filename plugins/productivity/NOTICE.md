@@ -70,8 +70,18 @@ thClaws marketplace at `github.com/thClaws/marketplace`:
      `#3ecf8e` and hover variant from `#c4684a` to `#2a9d6a`
    - layout, JavaScript, and DOM structure unchanged
 
-9. **This `NOTICE.md`** — added per Apache 2.0 §4(b) "stating that you
-   changed the files".
+9. **Working-memory file renamed `CLAUDE.md` → `AGENTS.md`** — across
+   `start/SKILL.md`, `update/SKILL.md`, `memory-management/SKILL.md`,
+   `dashboard.html`, and `README.md`. Reason: `AGENTS.md` is the
+   neutral, agent-tool-agnostic name (also recognized by thClaws's
+   built-in context loader, alongside `CLAUDE.md`). Internal JS
+   variable names in `dashboard.html` (`claudeMd`, `claudeFileHandle`)
+   are kept as-is to avoid bulk-rename typos — they're identifiers,
+   not user-visible strings, and renaming would touch 10+ unrelated
+   lines.
+
+10. **This `NOTICE.md`** — added per Apache 2.0 §4(b) "stating that you
+    changed the files".
 
 The original `LICENSE` (Apache License, Version 2.0) is preserved
 unchanged. All Anthropic copyright notices in any source files are

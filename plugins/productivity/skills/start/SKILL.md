@@ -15,14 +15,14 @@ Initialize the task and memory systems, then open the unified dashboard.
 
 Check the working directory for:
 - `TASKS.md` — task list
-- `CLAUDE.md` — working memory (thClaws also reads this; see note below)
+- `AGENTS.md` — working memory (thClaws also reads this; see note below)
 - `memory/` — deep memory directory
 - `dashboard.html` — the visual UI
 
-> **Note for thClaws users:** thClaws already loads `CLAUDE.md` from the
+> **Note for thClaws users:** thClaws already loads `AGENTS.md` from the
 > project root automatically as part of its built-in context, and has its
 > own auto-memory system at `~/.config/thclaws/memory/` for cross-project
-> facts (see ch08 of the user manual). This skill's `CLAUDE.md` and
+> facts (see ch08 of the user manual). This skill's `AGENTS.md` and
 > `memory/` files live in the **project working directory** — they
 > coexist with thClaws's user-level auto-memory, not replace it.
 > Project-level facts live here; cross-project facts live in
@@ -40,7 +40,7 @@ cp -n "{skill_dir}/../dashboard.html" ./dashboard.html
 
 **If `TASKS.md` doesn't exist** create it with the standard template (use the Write tool, body matches `task-management` skill's template).
 
-**If `CLAUDE.md` and `memory/` don't exist:** this is a fresh setup — after the dashboard copy, begin the memory bootstrap workflow (see below). Both files/dirs go in the current working directory.
+**If `AGENTS.md` and `memory/` don't exist:** this is a fresh setup — after the dashboard copy, begin the memory bootstrap workflow (see below). Both files/dirs go in the current working directory.
 
 ### 3. Open the Dashboard
 
@@ -61,7 +61,7 @@ If memory hasn't been bootstrapped yet, continue to step 5.
 
 ### 5. Bootstrap Memory (First Run Only)
 
-Only do this if `CLAUDE.md` and `memory/` don't exist yet.
+Only do this if `AGENTS.md` and `memory/` don't exist yet.
 
 The best source of workplace language is the user's actual task list. Real tasks = real shorthand.
 
@@ -126,7 +126,7 @@ Build a braindump of people, projects, and terms found. Present findings grouped
 
 From everything gathered, create:
 
-**CLAUDE.md** (working memory, ~50-80 lines):
+**AGENTS.md** (working memory, ~50-80 lines):
 ```markdown
 # Memory
 

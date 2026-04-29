@@ -88,7 +88,7 @@ Add answers to the appropriate memory files (people/, projects/, glossary.md).
 
 Tasks often contain richer context than memory. Extract and update:
 - **Links** from tasks → add to project/people files
-- **Status changes** ("launch done") → update project status, demote from CLAUDE.md
+- **Status changes** ("launch done") → update project status, demote from AGENTS.md
 - **Relationships** ("Todd's sign-off on Maya's proposal") → cross-reference people
 - **Deadlines** → add to project files
 

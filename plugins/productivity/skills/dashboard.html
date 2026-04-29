@@ -2738,10 +2738,14 @@
         memoryData = { claudeMd: null, memoryFiles: [], memoryDirs: {} };
 
         try {
-          const claudeFileHandle = await memoryDirHandle.getFileHandle('CLAUDE.md');
+          // thClaws fork: working memory lives in AGENTS.md (was
+          // CLAUDE.md upstream). thClaws auto-loads AGENTS.md from
+          // the project root as part of its built-in context, so
+          // having both write and read here lines them up.
+          const claudeFileHandle = await memoryDirHandle.getFileHandle('AGENTS.md');
           const file = await claudeFileHandle.getFile();
           memoryData.claudeMd = { content: await file.text(), fileHandle: claudeFileHandle };
-        } catch (e) { console.log('No CLAUDE.md found'); }
+        } catch (e) { console.log('No AGENTS.md found'); }
 
         try {
           const memoryDir = await memoryDirHandle.getDirectoryHandle('memory');
@@ -2887,12 +2891,12 @@
         ${statsHtml}
         <div class="file-card">
           <div class="file-card-header" onclick="this.nextElementSibling.classList.toggle('expanded'); this.querySelector('.toggle').textContent = this.nextElementSibling.classList.contains('expanded') ? '\u2212' : '+'">
-            <span class="file-card-title">CLAUDE.md</span>
+            <span class="file-card-title">AGENTS.md</span>
             <span class="toggle" style="color: var(--text-muted);">&minus;</span>
           </div>
           <div class="file-card-content expanded markdown-content">${claudeContent}</div>
         </div>
-        <button onclick="openEditModal('CLAUDE.md', 'claudeMd')" style="margin-top: 10px;">Edit CLAUDE.md</button>
+        <button onclick="openEditModal('AGENTS.md', 'claudeMd')" style="margin-top: 10px;">Edit AGENTS.md</button>
       `;
     }
 
@@ -3176,7 +3180,7 @@
           const writable = await memoryData.claudeMd.fileHandle.createWritable();
           await writable.write(content);
           await writable.close();
-          showStatus('Saved CLAUDE.md');
+          showStatus('Saved AGENTS.md');
 
         } else if (type === 'memoryFile') {
           const fileName = modalOverlay.dataset.fileName;
