@@ -1227,6 +1227,8 @@
       <div class="empty-state" id="boardEmptyState" style="width: 100%;">
         <p style="margin-bottom: 24px; font-size: 18px; font-weight: 600; color: var(--text-primary);">Select your TASKS.md file</p>
         <button id="openBtnLarge">Select TASKS.md</button>
+        <input id="fallbackFileInput" type="file" accept=".md,text/markdown" style="display: none;">
+        <p id="browserNotice" style="margin-top: 16px; font-size: 13px; color: var(--text-secondary); display: none;"></p>
       </div>
     </div>
   </div>
@@ -2433,40 +2435,94 @@
       input.addEventListener('blur', saveSection);
     }
 
+    // Detect File System Access API support up-front. Available in
+    // Chromium browsers (Chrome / Edge / Opera / Brave) but not in
+    // Safari or Firefox at the time of writing. Without it, we can
+    // still LOAD TASKS.md via a classic <input type="file"> but we
+    // can't save back to the same file — saving falls back to a
+    // download (browser drops it in your Downloads folder; you
+    // overwrite TASKS.md manually).
+    const FS_ACCESS_SUPPORTED = typeof window.showOpenFilePicker === 'function';
+
+    function applyLoadedFile(file, content, fileHandle) {
+      lastModified = file.lastModified;
+      const result = parseTaskMarkdown(content);
+      sections = result.sections;
+      tasks = result.tasks;
+      switchTaskView('board');
+      if (fileHandle) startWatching();
+      taskFileName = file.name;
+      filePathEl.textContent = file.name + (fileHandle ? '' : ' (read-only — Save downloads a new copy)');
+      showStatus('Loaded ' + file.name);
+    }
+
     async function openTaskFile() {
+      if (!FS_ACCESS_SUPPORTED) {
+        // Fall back to the hidden <input type="file">
+        document.getElementById('fallbackFileInput').click();
+        return;
+      }
       try {
         [taskFileHandle] = await window.showOpenFilePicker({
           types: [{ description: 'Markdown', accept: { 'text/markdown': ['.md'] } }]
         });
         const file = await taskFileHandle.getFile();
         const content = await file.text();
-        lastModified = file.lastModified;
-        const result = parseTaskMarkdown(content);
-        sections = result.sections;
-        tasks = result.tasks;
-        switchTaskView('board');
-        startWatching();
-        taskFileName = file.name;
-        filePathEl.textContent = file.name;
-        showStatus('Loaded ' + file.name);
+        applyLoadedFile(file, content, taskFileHandle);
       } catch (e) {
         if (e.name !== 'AbortError') { showStatus('Error: ' + e.message); }
       }
     }
 
+    // Surface the browser-support situation up-front so users on
+    // Safari/Firefox aren't left wondering why nothing happened.
+    if (!FS_ACCESS_SUPPORTED) {
+      const notice = document.getElementById('browserNotice');
+      if (notice) {
+        notice.style.display = 'block';
+        notice.innerHTML =
+          'Your browser doesn\'t support live save-back to <code>TASKS.md</code>. ' +
+          'Open this dashboard in Chrome / Edge for full read-write, or continue here — ' +
+          'changes will download as a new file you can overwrite manually.';
+      }
+    }
+
+    document.getElementById('fallbackFileInput').addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const content = await file.text();
+      taskFileHandle = null; // no handle — fallback path
+      applyLoadedFile(file, content, null);
+      e.target.value = ''; // allow re-picking the same file
+    });
+
     openTaskBtn.addEventListener('click', openTaskFile);
     document.getElementById('openBtnLarge')?.addEventListener('click', openTaskFile);
 
     saveBtn.addEventListener('click', async () => {
-      if (!taskFileHandle) return;
-      try {
-        const writable = await taskFileHandle.createWritable();
-        await writable.write(toMarkdown());
-        await writable.close();
-        hasChanges = false;
-        saveBtn.disabled = true;
-        showStatus('Saved');
-      } catch (e) { showStatus('Error: ' + e.message); }
+      if (taskFileHandle) {
+        try {
+          const writable = await taskFileHandle.createWritable();
+          await writable.write(toMarkdown());
+          await writable.close();
+          hasChanges = false;
+          saveBtn.disabled = true;
+          showStatus('Saved');
+        } catch (e) { showStatus('Error: ' + e.message); }
+      } else {
+        // Fallback path — trigger a download. User overwrites
+        // TASKS.md manually.
+        const blob = new Blob([toMarkdown()], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = taskFileName || 'TASKS.md';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showStatus('Downloaded ' + a.download + ' — replace your existing TASKS.md');
+      }
     });
 
     window.addEventListener('beforeunload', (e) => {
@@ -2569,6 +2625,13 @@
     }
 
     async function loadMemoryDirectory() {
+      // Memory tab requires showDirectoryPicker (no equivalent fallback
+      // — input[webkitdirectory] is read-only and clunky). Surface a
+      // clear message in unsupported browsers instead of a JS error.
+      if (typeof window.showDirectoryPicker !== 'function') {
+        showStatus('Memory tab requires Chrome / Edge — Safari and Firefox don\'t support directory picking yet.');
+        return;
+      }
       try {
         memoryDirHandle = await window.showDirectoryPicker();
 
