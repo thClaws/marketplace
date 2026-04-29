@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "thclaws-weather"
+version = "0.1.0"
+description = "Global weather MCP server (Open-Meteo) — first reference MCP for the thClaws marketplace"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [
+    { name = "ThaiGPT Co., Ltd. (thClaws project)" },
+]
+keywords = ["mcp", "model-context-protocol", "weather", "thclaws"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "mcp>=1.2.0",
+    "httpx>=0.27.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/thClaws/marketplace/tree/main/mcp/weather-mcp"
+Repository = "https://github.com/thClaws/marketplace"
+Issues = "https://github.com/thClaws/marketplace/issues"
+
+[project.scripts]
+thclaws-weather = "thclaws_weather.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/thclaws_weather"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/thclaws_weather",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]
