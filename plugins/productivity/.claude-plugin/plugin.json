@@ -4,5 +4,6 @@
   "description": "Manage tasks, plan your day, and build up memory of important context about your work. Forked from anthropics/knowledge-work-plugins for the thClaws marketplace — MCP connectors are decoupled so users add their own via /mcp install.",
   "author": {
     "name": "ThaiGPT Co., Ltd. (thClaws project)"
-  }
+  },
+  "skills": ["skills"]
 }
