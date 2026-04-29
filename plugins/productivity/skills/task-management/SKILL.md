@@ -53,16 +53,50 @@ Task format:
 - Sub-bullets for additional details
 - Completed: `- [x] ~~Task~~ (date)`
 
+## ALWAYS regenerate the dashboard snapshot after writing TASKS.md
+
+The dashboard renders from a snapshot inlined into `dashboard.html` —
+it does **not** re-read `TASKS.md` on every browser open (browser
+security forbids that from `file://`). So **every time you mutate
+`TASKS.md` (add, complete, edit, reorder a task), immediately run this
+Bash command** to refresh the snapshot — otherwise the user sees the
+old state in the dashboard:
+
+```bash
+python3 - <<'PY'
+import pathlib, re
+dash = pathlib.Path('dashboard.html')
+tasks = pathlib.Path('TASKS.md')
+if not (dash.exists() and tasks.exists()):
+    raise SystemExit(0)
+html = dash.read_text()
+content = tasks.read_text()
+new = re.sub(
+    r'<!--\s*thclaws-tasks-begin\s*-->[\s\S]*?<!--\s*thclaws-tasks-end\s*-->',
+    f'<!-- thclaws-tasks-begin -->\n{content}\n<!-- thclaws-tasks-end -->',
+    html,
+    count=1,
+)
+if new != html:
+    dash.write_text(new)
+PY
+```
+
+This is idempotent and a no-op if `dashboard.html` doesn't exist
+(user hasn't run `/start` yet) or if the snapshot already matches.
+
 ## How to Interact
 
 **When user asks "what's on my plate" / "my tasks":**
 - Read TASKS.md
 - Summarize Active and Waiting On sections
 - Highlight anything overdue or urgent
+- *(Read-only — no snapshot regen needed)*
 
 **When user says "add a task" / "remind me to":**
 - Add to Active section with `- [ ] **Task**` format
 - Include context if provided (who it's for, due date)
+- **Run the snapshot-regen Bash command above.**
 
 **When user says "done with X" / "finished X":**
 - Find the task
@@ -70,10 +104,12 @@ Task format:
 - Add strikethrough: `~~task~~`
 - Add completion date
 - Move to Done section
+- **Run the snapshot-regen Bash command above.**
 
 **When user asks "what am I waiting on":**
 - Read the Waiting On section
 - Note how long each item has been waiting
+- *(Read-only — no snapshot regen needed)*
 
 ## Conventions
 
