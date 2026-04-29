@@ -2653,7 +2653,11 @@
       }
     }
 
-    document.getElementById('fallbackFileInput').addEventListener('change', async (e) => {
+    // All addEventListener calls below use optional chaining so that
+    // a single missing element (e.g., dashboard.html got truncated
+    // mid-write, or a fork removed an element) doesn't throw and
+    // halt the entire boot script. Each handler is independent.
+    document.getElementById('fallbackFileInput')?.addEventListener('change', async (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
       const content = await file.text();
@@ -2662,16 +2666,14 @@
       e.target.value = ''; // allow re-picking the same file
     });
 
-    openTaskBtn.addEventListener('click', openTaskFile);
+    openTaskBtn?.addEventListener('click', openTaskFile);
     document.getElementById('openBtnLarge')?.addEventListener('click', openTaskFile);
 
     // Reload button: simplest possible refresh — re-fetches
     // dashboard.html (which the agent re-wrote with a fresh inlined
-    // snapshot) and re-reads any FSAA-connected file. Cheaper than
-    // teaching the dashboard to fetch its own file (browser security
-    // forbids file:// fetch of sibling files anyway). If the user
+    // snapshot) and re-reads any FSAA-connected file. If the user
     // has unsaved changes in this tab, prompt before discarding.
-    document.getElementById('reloadBtn').addEventListener('click', () => {
+    document.getElementById('reloadBtn')?.addEventListener('click', () => {
       if (hasChanges) {
         const ok = confirm(
           'You have unsaved changes in the dashboard. Reload anyway? Unsaved edits will be lost.'
