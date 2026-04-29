@@ -2712,6 +2712,31 @@
     });
 
     saveBtn.addEventListener('click', async () => {
+      // If we loaded via the inlined snapshot (no FSAA handle yet)
+      // and the browser supports the File System Access API, prompt
+      // the user to pick TASKS.md NOW so we can write back. The pick
+      // is a one-time per-project gesture; the resulting handle is
+      // persisted to IndexedDB and auto-restored on next visit.
+      if (!taskFileHandle && FS_ACCESS_SUPPORTED) {
+        try {
+          showStatus('Pick TASKS.md to enable live save…');
+          const [picked] = await window.showOpenFilePicker({
+            types: [{ description: 'Markdown', accept: { 'text/markdown': ['.md'] } }],
+          });
+          taskFileHandle = picked;
+          await saveTaskHandle(picked);
+          // Refresh path label — no longer a snapshot
+          filePathEl.textContent = picked.name;
+        } catch (e) {
+          if (e.name === 'AbortError') {
+            showStatus('Pick cancelled — Save fell back to download');
+          } else {
+            console.log('[thclaws] showOpenFilePicker failed:', e);
+          }
+          // Fall through to download path
+        }
+      }
+
       if (taskFileHandle) {
         try {
           const writable = await taskFileHandle.createWritable();
@@ -2719,11 +2744,11 @@
           await writable.close();
           hasChanges = false;
           saveBtn.disabled = true;
-          showStatus('Saved');
+          showStatus('Saved to ' + (taskFileHandle.name || 'TASKS.md'));
         } catch (e) { showStatus('Error: ' + e.message); }
       } else {
-        // Fallback path — trigger a download. User overwrites
-        // TASKS.md manually.
+        // Fallback path (Safari/Firefox or user-cancelled picker) —
+        // trigger a download. User overwrites TASKS.md manually.
         const blob = new Blob([toMarkdown()], { type: 'text/markdown' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
