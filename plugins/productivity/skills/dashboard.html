@@ -1379,7 +1379,19 @@
             resultSections.push({ id: currentSectionId, name: sectionName });
             resultTasks[currentSectionId] = [];
           }
-        } else if (currentSectionId && line.match(/^- \[[ xX]\]/)) {
+        } else if (line.match(/^- \[[ xX]\]/)) {
+          // Auto-create an implicit "Active" section when a task line
+          // appears before any `## ` header — natural for files written
+          // in a hurry (just `# Tasks` followed by checkboxes). Without
+          // this, section-less tasks were silently dropped.
+          if (!currentSectionId) {
+            currentSectionId = taskSectionId('Active');
+            currentSection = 'Active';
+            if (!resultTasks[currentSectionId]) {
+              resultSections.push({ id: currentSectionId, name: 'Active' });
+              resultTasks[currentSectionId] = [];
+            }
+          }
           if (currentTask) {
             resultTasks[currentSectionId].push(currentTask);
           }
