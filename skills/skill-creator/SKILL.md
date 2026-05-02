@@ -86,11 +86,28 @@ skill-name/
 ├── SKILL.md (required)
 │   ├── YAML frontmatter (name, description required)
 │   └── Markdown instructions
+├── requirements.txt (optional, Python deps — auto-surfaced)
 └── Bundled Resources (optional)
     ├── scripts/    - Executable code for deterministic/repetitive tasks
     ├── references/ - Docs loaded into context as needed
     └── assets/     - Files used in output (templates, icons, fonts)
 ```
+
+**thClaws auto-detection conventions** (zero-config when you follow them):
+
+- **`scripts/foo.py`** — listed in the skill response as `python <abs_path>/foo.py`. The thClaws Bash tool automatically activates the project venv (or creates one) when it sees `python ` at the front of a command, so no `source venv/bin/activate` boilerplate in your SKILL.md.
+- **`scripts/foo.sh`** — listed as `bash <abs_path>/foo.sh`. Files don't need `chmod +x` because invocation is via the interpreter.
+- **`scripts/foo.js`** / `.ts` / `.rb` / `.pl` / `.php` / `.lua` — listed with the conventional interpreter (`node`, `npx tsx`, `ruby`, `perl`, `php`, `lua`).
+- **`scripts/foo` (no extension)** — listed as just the path; the model picks the interpreter from your SKILL.md instructions.
+- **`requirements.txt` at the skill root** (sibling of `scripts/` and `SKILL.md`) — automatically surfaced as a one-time install hint:
+  ```
+  ## Python dependencies
+  Run once before invoking this skill:
+    pip install -r /abs/path/skill-name/requirements.txt
+  ```
+  The Bash tool's auto-venv layer wraps `pip install -r` in venv activation, so the deps land in the project venv. Idempotent — repeated installs are no-ops.
+
+If the conventions don't fit your skill (e.g. Python script needs to be invoked under `uv run` or `poetry run` for inline-deps semantics), write explicit `Run: ...` instructions in your SKILL.md body. The auto-section comes AFTER the body, so your instructions take precedence in the model's reading order.
 
 #### Progressive Disclosure
 
