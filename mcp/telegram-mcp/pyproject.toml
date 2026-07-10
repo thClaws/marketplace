@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "thclaws-telegram-mcp"
+version = "0.1.0"
+description = "Telegram Bot API MCP server for thClaws agents"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [
+    { name = "ThaiGPT Co., Ltd. (thClaws project)" },
+]
+keywords = ["mcp", "model-context-protocol", "telegram", "thclaws"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Communications :: Chat",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "mcp>=1.2.0",
+    "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/kaebmoo/thclaws-marketplace/tree/feat/telegram-mcp/mcp/telegram-mcp"
+Repository = "https://github.com/kaebmoo/thclaws-marketplace"
+Issues = "https://github.com/kaebmoo/thclaws-marketplace/issues"
+
+[project.scripts]
+thclaws-telegram = "telegram_mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/telegram_mcp"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/telegram_mcp",
+    "README.md",
+    "LICENSE",
+    "NOTICE.md",
+    "pyproject.toml",
+]

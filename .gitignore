@@ -1,0 +1,7 @@
+/.DS_Store
+.env
+.env.*
+!.env.example
+/mcp/telegram-mcp/src/telegram_mcp/__pycache__
+*.pyc
+mcp/telegram-mcp/src/telegram_mcp/.env
